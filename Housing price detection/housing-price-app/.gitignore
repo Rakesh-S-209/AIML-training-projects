@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Dataset (download from Kaggle — not committed to repo)
+Housing.csv
+
+# Node / frontend build artefacts (no Node installed yet)
+node_modules/
+dist/
+.vite/
+
+# OS
+.DS_Store
+Thumbs.db

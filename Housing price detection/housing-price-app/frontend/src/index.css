@@ -1,0 +1,218 @@
+/* ── Reset & base ─────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #f0f4f8;
+  color: #1a202c;
+  min-height: 100vh;
+}
+
+/* ── Layout ───────────────────────────────────────────────────────────── */
+.app {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+}
+
+/* ── Header ───────────────────────────────────────────────────────────── */
+.app-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.app-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2d3748;
+}
+
+.app-header p {
+  margin-top: 0.4rem;
+  color: #718096;
+  font-size: 0.95rem;
+}
+
+/* ── Card ─────────────────────────────────────────────────────────────── */
+.card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+}
+
+/* ── Section headings inside the card ────────────────────────────────── */
+.section-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a0aec0;
+  margin: 1.5rem 0 0.75rem;
+}
+
+.section-title:first-of-type {
+  margin-top: 0;
+}
+
+/* ── Form grid ────────────────────────────────────────────────────────── */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+/* ── Individual field ─────────────────────────────────────────────────── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.field label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.field input,
+.field select {
+  padding: 0.5rem 0.75rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #2d3748;
+  background: #f7fafc;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+}
+
+.field input:focus,
+.field select:focus {
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+  background: #fff;
+}
+
+/* ── Submit button ────────────────────────────────────────────────────── */
+.btn-predict {
+  margin-top: 1.75rem;
+  width: 100%;
+  padding: 0.8rem;
+  background: #4299e1;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.btn-predict:hover:not(:disabled) {
+  background: #3182ce;
+}
+
+.btn-predict:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-predict:disabled {
+  background: #a0aec0;
+  cursor: not-allowed;
+}
+
+/* ── Result panel ─────────────────────────────────────────────────────── */
+.result-panel {
+  margin-top: 1.75rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.result-panel.low    { background: #ebf8ff; border: 1.5px solid #bee3f8; }
+.result-panel.medium { background: #fffbeb; border: 1.5px solid #fef08a; }
+.result-panel.high   { background: #f0fff4; border: 1.5px solid #9ae6b4; }
+
+.result-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #718096;
+}
+
+.result-category {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin: 0.25rem 0;
+}
+
+.result-panel.low    .result-category { color: #2b6cb0; }
+.result-panel.medium .result-category { color: #b7791f; }
+.result-panel.high   .result-category { color: #276749; }
+
+/* ── Probability bars ─────────────────────────────────────────────────── */
+.probabilities {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  text-align: left;
+}
+
+.prob-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.prob-row-label {
+  width: 60px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4a5568;
+  flex-shrink: 0;
+}
+
+.prob-bar-track {
+  flex: 1;
+  height: 10px;
+  background: #e2e8f0;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.prob-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.prob-bar-fill.low    { background: #4299e1; }
+.prob-bar-fill.medium { background: #ecc94b; }
+.prob-bar-fill.high   { background: #48bb78; }
+
+.prob-pct {
+  width: 38px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4a5568;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── Error message ────────────────────────────────────────────────────── */
+.error-msg {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: #fff5f5;
+  border: 1.5px solid #fed7d7;
+  border-radius: 8px;
+  color: #c53030;
+  font-size: 0.9rem;
+}

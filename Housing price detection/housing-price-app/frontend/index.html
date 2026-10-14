@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Housing Price Predictor</title>
+  <!-- React + Babel via CDN — no build step needed -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f0f4f8;
+      color: #1a202c;
+      min-height: 100vh;
+    }
+    .app { max-width: 820px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+
+    /* Header */
+    .app-header { text-align: center; margin-bottom: 2rem; }
+    .app-header h1 { font-size: 2rem; font-weight: 700; color: #2d3748; }
+    .app-header p  { margin-top: .4rem; color: #718096; font-size: .95rem; }
+
+    /* Card */
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.08);
+      padding: 2rem;
+    }
+
+    /* Section title */
+    .section-title {
+      font-size: .75rem; font-weight: 600;
+      letter-spacing: .08em; text-transform: uppercase;
+      color: #a0aec0; margin: 1.5rem 0 .75rem;
+    }
+    .section-title:first-of-type { margin-top: 0; }
+
+    /* Grid */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 1rem;
+    }
+    .field { display: flex; flex-direction: column; gap: .35rem; }
+    .field label { font-size: .875rem; font-weight: 500; color: #4a5568; }
+    .field input, .field select {
+      padding: .5rem .75rem;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: .95rem; color: #2d3748;
+      background: #f7fafc;
+      transition: border-color .15s, box-shadow .15s;
+      outline: none;
+    }
+    .field input:focus, .field select:focus {
+      border-color: #4299e1;
+      box-shadow: 0 0 0 3px rgba(66,153,225,.2);
+      background: #fff;
+    }
+
+    /* Button */
+    .btn-predict {
+      margin-top: 1.75rem; width: 100%;
+      padding: .8rem;
+      background: #4299e1; color: #fff;
+      font-size: 1rem; font-weight: 600;
+      border: none; border-radius: 8px;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+    }
+    .btn-predict:hover:not(:disabled) { background: #3182ce; }
+    .btn-predict:active:not(:disabled) { transform: scale(.98); }
+    .btn-predict:disabled { background: #a0aec0; cursor: not-allowed; }
+
+    /* Result */
+    .result-panel {
+      margin-top: 1.75rem; padding: 1.25rem 1.5rem;
+      border-radius: 10px; text-align: center;
+    }
+    .result-panel.low    { background: #ebf8ff; border: 1.5px solid #bee3f8; }
+    .result-panel.medium { background: #fffbeb; border: 1.5px solid #fef08a; }
+    .result-panel.high   { background: #f0fff4; border: 1.5px solid #9ae6b4; }
+    .result-label {
+      font-size: .8rem; font-weight: 600;
+      letter-spacing: .06em; text-transform: uppercase; color: #718096;
+    }
+    .result-category { font-size: 2.2rem; font-weight: 800; margin: .25rem 0; }
+    .result-panel.low    .result-category { color: #2b6cb0; }
+    .result-panel.medium .result-category { color: #b7791f; }
+    .result-panel.high   .result-category { color: #276749; }
+
+    /* Probability bars */
+    .probabilities { margin-top: 1rem; display: flex; flex-direction: column; gap: .5rem; text-align: left; }
+    .prob-row { display: flex; align-items: center; gap: .6rem; }
+    .prob-row-label { width: 60px; font-size: .8rem; font-weight: 600; color: #4a5568; flex-shrink: 0; }
+    .prob-bar-track { flex: 1; height: 10px; background: #e2e8f0; border-radius: 99px; overflow: hidden; }
+    .prob-bar-fill  { height: 100%; border-radius: 99px; transition: width .4s ease; }
+    .prob-bar-fill.low    { background: #4299e1; }
+    .prob-bar-fill.medium { background: #ecc94b; }
+    .prob-bar-fill.high   { background: #48bb78; }
+    .prob-pct { width: 38px; font-size: .8rem; font-weight: 600; color: #4a5568; text-align: right; flex-shrink: 0; }
+
+    /* Error */
+    .error-msg {
+      margin-top: 1rem; padding: .75rem 1rem;
+      background: #fff5f5; border: 1.5px solid #fed7d7;
+      border-radius: 8px; color: #c53030; font-size: .9rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    const INITIAL = {
+      area: '', bedrooms: '', bathrooms: '', stories: '', parking: '',
+      mainroad: 'yes', guestroom: 'no', basement: 'no',
+      hotwaterheating: 'no', airconditioning: 'no', prefarea: 'no',
+      furnishingstatus: 'furnished',
+    };
+
+    const CAT_CLASS  = { Low: 'low', Medium: 'medium', High: 'high' };
+    const PROB_ORDER = ['Low', 'Medium', 'High'];
+    const API_BASE   = 'http://localhost:5000';
+
+    function NumericField({ label, name, value, onChange, min, max, placeholder }) {
+      return (
+        <div className="field">
+          <label htmlFor={name}>{label}</label>
+          <input id={name} type="number" name={name} value={value}
+            onChange={onChange} min={min} max={max}
+            placeholder={placeholder} required />
+        </div>
+      );
+    }
+
+    function YesNoField({ label, name, value, onChange }) {
+      return (
+        <div className="field">
+          <label htmlFor={name}>{label}</label>
+          <select id={name} name={name} value={value} onChange={onChange}>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+      );
+    }
+
+    function ResultPanel({ result }) {
+      const cls = CAT_CLASS[result.label] || 'low';
+      return (
+        <div className={`result-panel ${cls}`}>
+          <p className="result-label">Predicted Price Category</p>
+          <p className="result-category">{result.label}</p>
+          {result.probabilities && (
+            <div className="probabilities">
+              {PROB_ORDER.map(cat => (
+                <div className="prob-row" key={cat}>
+                  <span className="prob-row-label">{cat}</span>
+                  <div className="prob-bar-track">
+                    <div className={`prob-bar-fill ${cat.toLowerCase()}`}
+                      style={{ width: `${result.probabilities[cat]}%` }} />
+                  </div>
+                  <span className="prob-pct">{result.probabilities[cat]}%</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function PredictionForm() {
+      const [form, setForm]       = useState(INITIAL);
+      const [result, setResult]   = useState(null);
+      const [loading, setLoading] = useState(false);
+      const [error, setError]     = useState(null);
+
+      function handleChange(e) {
+        const { name, value } = e.target;
+        setForm(prev => ({ ...prev, [name]: value }));
+        setResult(null); setError(null);
+      }
+
+      async function handleSubmit(e) {
+        e.preventDefault();
+        setLoading(true); setResult(null); setError(null);
+        try {
+          const res = await fetch(`${API_BASE}/api/predict`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...form,
+              area:      Number(form.area),
+              bedrooms:  Number(form.bedrooms),
+              bathrooms: Number(form.bathrooms),
+              stories:   Number(form.stories),
+              parking:   Number(form.parking),
+            }),
+          });
+          const json = await res.json();
+          if (!res.ok) setError(json.error || 'Prediction failed.');
+          else setResult(json);
+        } catch {
+          setError('Cannot reach the server. Is Flask running on port 5000?');
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      return (
+        <form onSubmit={handleSubmit} noValidate>
+          <p className="section-title">Property Details</p>
+          <div className="form-grid">
+            <NumericField label="Area (sq ft)"     name="area"      value={form.area}      onChange={handleChange} min={500}  placeholder="e.g. 7420" />
+            <NumericField label="Bedrooms"         name="bedrooms"  value={form.bedrooms}  onChange={handleChange} min={1} max={10} placeholder="e.g. 3" />
+            <NumericField label="Bathrooms"        name="bathrooms" value={form.bathrooms} onChange={handleChange} min={1} max={10} placeholder="e.g. 2" />
+            <NumericField label="Stories"          name="stories"   value={form.stories}   onChange={handleChange} min={1} max={10} placeholder="e.g. 2" />
+            <NumericField label="Parking Spaces"   name="parking"   value={form.parking}   onChange={handleChange} min={0} max={10} placeholder="e.g. 1" />
+          </div>
+
+          <p className="section-title">Amenities</p>
+          <div className="form-grid">
+            <YesNoField label="Main Road Access"  name="mainroad"        value={form.mainroad}        onChange={handleChange} />
+            <YesNoField label="Guest Room"        name="guestroom"       value={form.guestroom}       onChange={handleChange} />
+            <YesNoField label="Basement"          name="basement"        value={form.basement}        onChange={handleChange} />
+            <YesNoField label="Hot Water Heating" name="hotwaterheating" value={form.hotwaterheating} onChange={handleChange} />
+            <YesNoField label="Air Conditioning"  name="airconditioning" value={form.airconditioning} onChange={handleChange} />
+            <YesNoField label="Preferred Area"    name="prefarea"        value={form.prefarea}        onChange={handleChange} />
+          </div>
+
+          <p className="section-title">Furnishing</p>
+          <div className="form-grid">
+            <div className="field">
+              <label htmlFor="furnishingstatus">Furnishing Status</label>
+              <select id="furnishingstatus" name="furnishingstatus"
+                value={form.furnishingstatus} onChange={handleChange}>
+                <option value="furnished">Furnished</option>
+                <option value="semi-furnished">Semi-furnished</option>
+                <option value="unfurnished">Unfurnished</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" className="btn-predict" disabled={loading}>
+            {loading ? 'Predicting…' : 'Predict Price Category'}
+          </button>
+
+          {error  && <p className="error-msg">⚠ {error}</p>}
+          {result && <ResultPanel result={result} />}
+        </form>
+      );
+    }
+
+    function App() {
+      return (
+        <div className="app">
+          <header className="app-header">
+            <h1>🏠 Housing Price Predictor</h1>
+            <p>Enter property details to predict the price category (Low / Medium / High)</p>
+          </header>
+          <main className="card">
+            <PredictionForm />
+          </main>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
