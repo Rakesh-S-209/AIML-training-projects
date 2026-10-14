@@ -1,0 +1,18 @@
+# Logs
+*.log
+server.log
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+venv/
+.venv/
+
+# Data files (keep out of repo — too large / sensitive)
+*.csv
+
+# Node
+node_modules/
+dist/
