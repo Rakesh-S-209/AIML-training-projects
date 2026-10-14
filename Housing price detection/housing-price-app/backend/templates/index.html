@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Housing Price Predictor</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: #f0f4f8;
+      color: #1a202c;
+      min-height: 100vh;
+    }
+
+    .app { max-width: 780px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+
+    .app-header { text-align: center; margin-bottom: 2rem; }
+    .app-header h1 { font-size: 2rem; font-weight: 700; color: #2d3748; }
+    .app-header p { margin-top: 0.4rem; color: #718096; font-size: 0.95rem; }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      padding: 2rem;
+    }
+
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #a0aec0;
+      margin: 1.5rem 0 0.75rem;
+    }
+    .section-title:first-of-type { margin-top: 0; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 0.35rem; }
+    .field label { font-size: 0.875rem; font-weight: 500; color: #4a5568; }
+
+    .field input,
+    .field select {
+      padding: 0.5rem 0.75rem;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      color: #2d3748;
+      background: #f7fafc;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      outline: none;
+    }
+    .field input:focus,
+    .field select:focus {
+      border-color: #4299e1;
+      box-shadow: 0 0 0 3px rgba(66,153,225,0.2);
+      background: #fff;
+    }
+
+    .btn-predict {
+      margin-top: 1.75rem;
+      width: 100%;
+      padding: 0.8rem;
+      background: #4299e1;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn-predict:hover:not(:disabled) { background: #3182ce; }
+    .btn-predict:active:not(:disabled) { transform: scale(0.98); }
+    .btn-predict:disabled { background: #a0aec0; cursor: not-allowed; }
+
+    .result-panel {
+      margin-top: 1.75rem;
+      padding: 1.5rem;
+      background: #ebf8ff;
+      border: 1.5px solid #bee3f8;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .result-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #718096;
+    }
+
+    .result-price {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #2b6cb0;
+      margin: 0.4rem 0 0.2rem;
+    }
+
+    .result-note {
+      font-size: 0.8rem;
+      color: #718096;
+    }
+
+    .error-msg {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      background: #fff5f5;
+      border: 1.5px solid #fed7d7;
+      border-radius: 8px;
+      color: #c53030;
+      font-size: 0.9rem;
+    }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1>🏠 Housing Price Predictor</h1>
+      <p>Enter property details to get an estimated market price</p>
+    </header>
+
+    <main class="card">
+      <form id="predictionForm" novalidate>
+
+        <p class="section-title">Property Details</p>
+        <div class="form-grid">
+          <div class="field">
+            <label for="area">Area (sq ft)</label>
+            <input type="number" id="area" name="area" min="500" placeholder="e.g. 7420" required />
+          </div>
+          <div class="field">
+            <label for="bedrooms">Bedrooms</label>
+            <input type="number" id="bedrooms" name="bedrooms" min="1" max="10" placeholder="e.g. 3" required />
+          </div>
+          <div class="field">
+            <label for="bathrooms">Bathrooms</label>
+            <input type="number" id="bathrooms" name="bathrooms" min="1" max="10" placeholder="e.g. 2" required />
+          </div>
+          <div class="field">
+            <label for="stories">Stories</label>
+            <input type="number" id="stories" name="stories" min="1" max="10" placeholder="e.g. 2" required />
+          </div>
+          <div class="field">
+            <label for="parking">Parking Spaces</label>
+            <input type="number" id="parking" name="parking" min="0" max="10" placeholder="e.g. 1" required />
+          </div>
+        </div>
+
+        <p class="section-title">Amenities</p>
+        <div class="form-grid">
+          <div class="field">
+            <label for="mainroad">Main Road Access</label>
+            <select id="mainroad" name="mainroad">
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="guestroom">Guest Room</label>
+            <select id="guestroom" name="guestroom">
+              <option value="yes">Yes</option>
+              <option value="no" selected>No</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="basement">Basement</label>
+            <select id="basement" name="basement">
+              <option value="yes">Yes</option>
+              <option value="no" selected>No</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="hotwaterheating">Hot Water Heating</label>
+            <select id="hotwaterheating" name="hotwaterheating">
+              <option value="yes">Yes</option>
+              <option value="no" selected>No</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="airconditioning">Air Conditioning</label>
+            <select id="airconditioning" name="airconditioning">
+              <option value="yes">Yes</option>
+              <option value="no" selected>No</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="prefarea">Preferred Area</label>
+            <select id="prefarea" name="prefarea">
+              <option value="yes">Yes</option>
+              <option value="no" selected>No</option>
+            </select>
+          </div>
+        </div>
+
+        <p class="section-title">Furnishing</p>
+        <div class="form-grid">
+          <div class="field">
+            <label for="furnishingstatus">Furnishing Status</label>
+            <select id="furnishingstatus" name="furnishingstatus">
+              <option value="furnished">Furnished</option>
+              <option value="semi-furnished">Semi-furnished</option>
+              <option value="unfurnished">Unfurnished</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-predict" id="submitBtn">Predict Price</button>
+
+        <p id="errorMsg" class="error-msg hidden"></p>
+        <div id="resultPanel" class="result-panel hidden">
+          <p class="result-label">Estimated Market Price</p>
+          <p class="result-price" id="resultPrice"></p>
+          <p class="result-note">Linear Regression prediction</p>
+        </div>
+
+      </form>
+    </main>
+  </div>
+
+  <script>
+    const form = document.getElementById("predictionForm");
+    const submitBtn = document.getElementById("submitBtn");
+    const errorMsg = document.getElementById("errorMsg");
+    const resultPanel = document.getElementById("resultPanel");
+    const resultPrice = document.getElementById("resultPrice");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      errorMsg.classList.add("hidden");
+      resultPanel.classList.add("hidden");
+
+      const data = {
+        area:             Number(form.area.value),
+        bedrooms:         Number(form.bedrooms.value),
+        bathrooms:        Number(form.bathrooms.value),
+        stories:          Number(form.stories.value),
+        parking:          Number(form.parking.value),
+        mainroad:         form.mainroad.value,
+        guestroom:        form.guestroom.value,
+        basement:         form.basement.value,
+        hotwaterheating:  form.hotwaterheating.value,
+        airconditioning:  form.airconditioning.value,
+        prefarea:         form.prefarea.value,
+        furnishingstatus: form.furnishingstatus.value,
+      };
+
+      const numericFields = ["area", "bedrooms", "bathrooms", "stories", "parking"];
+      for (const f of numericFields) {
+        if (!data[f] && data[f] !== 0) {
+          showError("Please fill in the \"" + f + "\" field.");
+          return;
+        }
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Predicting\u2026";
+
+      try {
+        const res = await fetch("/api/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+
+        const json = await res.json();
+
+        if (!res.ok) {
+          showError(json.error || "Prediction failed. Please try again.");
+        } else {
+          showResult(json.predicted_price);
+        }
+      } catch (err) {
+        showError("Could not reach the server. Please refresh and try again.");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Predict Price";
+      }
+    });
+
+    function showError(msg) {
+      errorMsg.textContent = "\u26A0 " + msg;
+      errorMsg.classList.remove("hidden");
+    }
+
+    function showResult(price) {
+      const formatted = new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR",
+        maximumFractionDigits: 0,
+      }).format(price);
+      resultPrice.textContent = formatted;
+      resultPanel.classList.remove("hidden");
+    }
+  </script>
+</body>
+</html>
