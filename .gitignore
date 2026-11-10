@@ -1,6 +1,11 @@
 # MNIST raw dataset — open source, no need to track
 deep learning/mnist/data/
 
+# CIFAR-10 raw dataset — open source, no need to track
+deep learning/cifar/cifar-10-python.tar.gz
+deep learning/cifar/cifar10_high_accuracy_model.keras
+deep learning/cifar/.gradio
+
 # Python
 __pycache__/
 *.py[cod]
@@ -22,5 +27,7 @@ venv/
 env/
 
 # OS
+.DS_Store
+Thumbs.db
 .DS_Store
 Thumbs.db
