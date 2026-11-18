@@ -1,21 +1,12 @@
-# MNIST raw dataset — open source, no need to track
-deep learning/mnist/data/
+# ML/DL datasets — open source, download on demand
+deep learning/*/data/
+deep learning/*/*.tar.gz
 
-# CIFAR-10 raw dataset — open source, no need to track
-deep learning/cifar/cifar-10-python.tar.gz
-deep learning/cifar/cifar10_high_accuracy_model.keras
-deep learning/cifar/.gradio
-
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-.Python
-*.egg-info/
-dist/
-build/
-*.egg
+# Trained models — large files, regenerate as needed
+deep learning/*/*.h5
+deep learning/*/*.keras
+deep learning/*/*.pth
+deep learning/*/*.pkl
 
 # Jupyter
 .ipynb_checkpoints/
@@ -27,7 +18,5 @@ venv/
 env/
 
 # OS
-.DS_Store
-Thumbs.db
 .DS_Store
 Thumbs.db
